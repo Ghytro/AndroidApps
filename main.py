@@ -16,9 +16,6 @@ import xml.dom.minidom
 
 def xml_parse(fileName):
     doc = xml.dom.minidom.parse(fileName)
-    
-
-
 
 #setting screen config
 Config.set('graphics', 'resizable', True)
@@ -46,30 +43,30 @@ Builder.load_string("""
 
         TextInput:
             multiline: False
-            size_hint: None, None
-            size: 200, 35
+            size_hint: .75, None
+            size: 0, 40
             hint_text: 'Логин'
             pos_hint: {'y': .6, 'center_x': .5}
-            font_size: 20
+            font_size: '20px'
             font_name: 'font.ttf'
 
         TextInput:
             multiline: False
-            size_hint: None, None
-            size: 200, 35
+            size_hint: .75, None
+            size: 0, 40
             hint_text: 'Пароль'
             pos_hint: {'y': .5, 'center_x': .5}
             password: True
             password_mask: '*'
-            font_size: 20
+            font_size: '20px'
             font_name: 'font.ttf'
 
         Button:
             text: 'Войти'
             size_hint: None, None
-            size: 100, 40
+            size: 150, 50
             pos_hint: {'y': .35, 'center_x': .5}
-            font_size: 24
+            font_size: 28
             on_press: CheckUser()
             background_normal: ''
             background_color: 74/255, 118/255, 168/255, 1
@@ -78,16 +75,16 @@ Builder.load_string("""
         Label:
             text: 'Нет аккаунта?'
             pos_hint: {'y': -.22}
-            font_size: 16
+            font_size: 18
             color: .1, .1, .1, 1
             font_name: 'font.ttf'
 
         Button:
             text: 'Зарегистрироваться!'
             size_hint: None, None
-            size: 200, 40
+            size: 220, 40
             pos_hint: {'y': .2, 'center_x': .5}
-            font_size: 18
+            font_size: 22
             on_press: root.manager.current = 'register'
             background_normal: ''
             background_color: 74/255, 118/255, 168/255, 1
@@ -110,18 +107,20 @@ Builder.load_string("""
             font_name: 'font.ttf'
 
         TextInput:
+            id: 'reglogininp'
             multiline: False
-            size_hint: None, None
-            size: 200, 35
+            size_hint: .75, None
+            size: 0, 35
             hint_text: 'Логин'
             pos_hint: {'y': .7, 'center_x': .5}
             font_size: 20
             font_name: 'font.ttf'
 
         TextInput:
+            id: 'regpassinp'
             multiline: False
-            size_hint: None, None
-            size: 200, 35
+            size_hint: .75, None
+            size: 0, 35
             hint_text: 'Пароль'
             pos_hint: {'y': .6, 'center_x': .5}
             password: True
@@ -130,9 +129,10 @@ Builder.load_string("""
             font_name: 'font.ttf'
 
         TextInput:
+            id: 'regpassconfirm'
             multiline: False
-            size_hint: None, None
-            size: 200, 35
+            size_hint: .75, None
+            size: 0, 35
             hint_text: 'Повторите пароль'
             pos_hint: {'y': .5, 'center_x': .5}
             password: True
@@ -143,16 +143,16 @@ Builder.load_string("""
         Button:
             text: 'Зарегистрироваться!'
             size_hint: None, None
-            size: 175, 50
+            size: 220, 50
             pos_hint: {'y': .35, 'center_x': .5}     
             background_normal: ''
             background_color: 74/255, 118/255, 168/255, 1
             font_name: 'font.ttf'
-
+            font_size: 20
+            on_press: root.Pr()
 """)
 
 #connecting to database
-
 
 def CheckUser(self, instance):
     connection = pymysql.connect(host='localhost', user='root', password='123', db='python_chat', charset='utf8mb4')
@@ -162,12 +162,19 @@ def CheckUser(self, instance):
 
     connection.close()
 
+
 class AuthoriseScreen(Screen):
-    pass
+    def __init__(self, **kwargs):
+        super(AuthoriseScreen, self).__init__(**kwargs)
         
 
 class RegisterScreen(Screen):
-    pass
+    def __init__(self, **kwargs):
+        super(RegisterScreen, self).__init__(**kwargs)
+
+    def Pr(self):
+        #здесь должна быть функция с SQL запросом по созданию пользователя
+        print(1)
 
 mainScreenManager = ScreenManager()
 mainScreenManager.add_widget(AuthoriseScreen(name='auth'))
