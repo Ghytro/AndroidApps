@@ -17,6 +17,12 @@ import xml.dom.minidom
 def xml_parse(fileName):
     doc = xml.dom.minidom.parse(fileName)
 
+
+def hash_password(_password):
+    hash_object = hashlib.sha256(_password.encode('utf-8'))
+    hex_dig = hash_object.hexdigest()
+    return hex_dig
+
 #setting screen config
 Config.set('graphics', 'resizable', True)
 Config.set('graphics', 'width', 9*50)
@@ -67,7 +73,7 @@ Builder.load_string("""
             size: 150, 50
             pos_hint: {'y': .35, 'center_x': .5}
             font_size: 28
-            on_press: root.Pr()
+            on_press: root.CheckUser()
             background_normal: ''
             background_color: 74/255, 118/255, 168/255, 1
             font_name: 'font.ttf'
@@ -160,25 +166,33 @@ Builder.load_string("""
             on_press: root.RegisterUser()
 """)
 
-#connecting to database
-
-def CheckUser(self, instance):
-    connection = pymysql.connect(host='localhost', user='root', password='123', db='python_chat', charset='utf8mb4')
-    with connection:
-        cur = connection.cursor()
-        cur.execute("")
-
-    connection.close()
-
-
 class AuthoriseScreen(Screen):
     def __init__(self, **kwargs):
         super(AuthoriseScreen, self).__init__(**kwargs)
 
-    def Pr(self):
+    def CheckUser(self):
         #здесь должна быть функция с SQL запросом по проверке пользователя
-        print(1)
         
+        textInputValues = []
+        for i in self.children[0].children:
+            if type(i) == TextInput:
+                textInputValues.append(i.text)
+        textInputValues = list(reversed(textInputValues))
+
+        hashedPass = str(hash_password(textInputValues[1]))
+
+        connection = pymysql.connect(host='localhost', user='root', password='123', db='python_chat', charset='utf8mb4')
+        with connection:
+            cur = connection.cursor()
+            query = "SELECT * FROM UserLoginData WHERE UserLoginData.login = '" + textInputValues[0] + "' and UserLoginData.pass = '" + hashedPass + "'"
+            res = cur.execute(query)
+        
+        if res == 0:
+            print('user doesnt exist')
+        else:
+            print('LOGIN OK')
+
+        connection.close()
 
 class RegisterScreen(Screen):
     def __init__(self, **kwargs):
@@ -192,17 +206,31 @@ class RegisterScreen(Screen):
                 textInputValues.append(i.text)
         textInputValues = list(reversed(textInputValues))
 
-        
         #проверочки:
         ########################################################################
         errLabel = self.children[0].children[len(self.children[0].children) - 2]
 
+        if len(textInputValues[0]) == 0:
+            errLabel.text = 'Логин не может быть пустым'
+            errLabel.font_size = 18
+            return
+
+        prohibited_symbols = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!$%^&?*()[]{}_-=`~+/\\\'|"<>.,'
+
+        for i in textInputValues[0]:
+            if not(i in prohibited_symbols):
+                errLabel.text = 'Логин может состоять только из букв\nлатинского алфавита и символов\n!$%^&?*()[]{}_-=`~+/\\\'|"<>.,'
+                errLabel.font_size = 16
+                return
+
         if textInputValues[1] != textInputValues[2]:
             errLabel.text = 'Введенные пароли не совпадают'
+            errLabel.font_size = 20
             return
 
         if len(textInputValues[1]) < 6:
             errLabel.text = 'Пароль должен быть как минимум 6 символов!'
+            errLabel.font_size = 16
             return
 
         connection = pymysql.connect(host='localhost', user='root', password='123', db='python_chat', charset='utf8mb4')
@@ -216,12 +244,13 @@ class RegisterScreen(Screen):
             connection.close()
             return
 
-        #если проверки пройдены подключаем
+        #если проверки пройдены создаем пользователя
         
         with connection:
             cur = connection.cursor()
-            request = "INSERT INTO UserLoginData (login, pass) values('" + textInputValues[0] + "', '" + textInputValues[1] + "')"
-            cur.execute(request)
+            hashed_password = str(hash_password(textInputValues[1]))
+            query = "INSERT INTO UserLoginData (login, pass) values('" + textInputValues[0] + "', '" + hashed_password + "')"
+            cur.execute(query)
 
         connection.close()
 
@@ -232,6 +261,8 @@ mainScreenManager.add_widget(RegisterScreen(name='register'))
 class ChatApp(App):
     def build(self):
         return mainScreenManager
+
+print (hash_password('Hello world!'))
 
 if __name__ == '__main__':
     ChatApp().run()
