@@ -57,7 +57,7 @@ Builder.load_string("""
             hint_text: 'Пароль'
             pos_hint: {'y': .5, 'center_x': .5}
             password: True
-            password_mask: '*'
+            password_mask: '•'
             font_size: '20px'
             font_name: 'font.ttf'
 
@@ -67,7 +67,7 @@ Builder.load_string("""
             size: 150, 50
             pos_hint: {'y': .35, 'center_x': .5}
             font_size: 28
-            on_press: CheckUser()
+            on_press: root.Pr()
             background_normal: ''
             background_color: 74/255, 118/255, 168/255, 1
             font_name: 'font.ttf'
@@ -106,38 +106,46 @@ Builder.load_string("""
             color: .1, .1, .1, 1
             font_name: 'font.ttf'
 
+        Label:
+            id: 'errorlabel'
+            text: ''
+            pos_hint: {'y': .33, 'center_x': .5}
+            color: 1, 0, 0, 1
+            font_name: 'font.ttf'
+            font_size: 22
+
         TextInput:
             id: 'reglogininp'
             multiline: False
             size_hint: .75, None
-            size: 0, 35
+            size: 0, 40
             hint_text: 'Логин'
             pos_hint: {'y': .7, 'center_x': .5}
-            font_size: 20
+            font_size: '20px'
             font_name: 'font.ttf'
 
         TextInput:
             id: 'regpassinp'
             multiline: False
             size_hint: .75, None
-            size: 0, 35
+            size: 0, 40
             hint_text: 'Пароль'
             pos_hint: {'y': .6, 'center_x': .5}
             password: True
-            password_mask: '*'
-            font_size: 20
+            password_mask: '•'
+            font_size: '20px'
             font_name: 'font.ttf'
 
         TextInput:
             id: 'regpassconfirm'
             multiline: False
             size_hint: .75, None
-            size: 0, 35
+            size: 0, 40
             hint_text: 'Повторите пароль'
             pos_hint: {'y': .5, 'center_x': .5}
             password: True
-            password_mask: '*'
-            font_size: 20
+            password_mask: '•'
+            font_size: '20px'
             font_name: 'font.ttf'
 
         Button:
@@ -149,7 +157,7 @@ Builder.load_string("""
             background_color: 74/255, 118/255, 168/255, 1
             font_name: 'font.ttf'
             font_size: 20
-            on_press: root.Pr()
+            on_press: root.RegisterUser()
 """)
 
 #connecting to database
@@ -166,15 +174,56 @@ def CheckUser(self, instance):
 class AuthoriseScreen(Screen):
     def __init__(self, **kwargs):
         super(AuthoriseScreen, self).__init__(**kwargs)
+
+    def Pr(self):
+        #здесь должна быть функция с SQL запросом по проверке пользователя
+        print(1)
         
 
 class RegisterScreen(Screen):
     def __init__(self, **kwargs):
         super(RegisterScreen, self).__init__(**kwargs)
 
-    def Pr(self):
-        #здесь должна быть функция с SQL запросом по созданию пользователя
-        print(1)
+    def RegisterUser(self):
+
+        textInputValues = []
+        for i in self.children[0].children:
+            if type(i) == TextInput:
+                textInputValues.append(i.text)
+        textInputValues = list(reversed(textInputValues))
+
+        
+        #проверочки:
+        ########################################################################
+        errLabel = self.children[0].children[len(self.children[0].children) - 2]
+
+        if textInputValues[1] != textInputValues[2]:
+            errLabel.text = 'Введенные пароли не совпадают'
+            return
+
+        if len(textInputValues[1]) < 6:
+            errLabel.text = 'Пароль должен быть как минимум 6 символов!'
+            return
+
+        connection = pymysql.connect(host='localhost', user='root', password='123', db='python_chat', charset='utf8mb4')
+        exists = 0
+        with connection:
+            cur = connection.cursor()
+            exists = cur.execute("SELECT * FROM UserLoginData WHERE UserLoginData.login='" + textInputValues[0] + "'")
+            
+        if exists:
+            errLabel.text = 'Пользователь с таким логином существует.'
+            connection.close()
+            return
+
+        #если проверки пройдены подключаем
+        
+        with connection:
+            cur = connection.cursor()
+            request = "INSERT INTO UserLoginData (login, pass) values('" + textInputValues[0] + "', '" + textInputValues[1] + "')"
+            cur.execute(request)
+
+        connection.close()
 
 mainScreenManager = ScreenManager()
 mainScreenManager.add_widget(AuthoriseScreen(name='auth'))
