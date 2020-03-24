@@ -47,6 +47,13 @@ Builder.load_string("""
             color: .1, .1, .1, 1
             font_name: 'font.ttf'
 
+        Label:
+            text: ''
+            pos_hint: {'center_x': .5, 'y': .3}
+            color: 1, 0, 0, 1
+            font_size: 24
+            font_name: 'font.ttf'
+
         TextInput:
             multiline: False
             size_hint: .75, None
@@ -164,6 +171,14 @@ Builder.load_string("""
             font_name: 'font.ttf'
             font_size: 20
             on_press: root.RegisterUser()
+
+<ChatScreen>:
+    FloatLayout:
+        Label:
+            text: 'Sucessful Login'
+            color: 1, 1, 1, 1
+            font_name: 'font.ttf'
+            font_size: 28
 """)
 
 class AuthoriseScreen(Screen):
@@ -173,6 +188,8 @@ class AuthoriseScreen(Screen):
     def CheckUser(self):
         #здесь должна быть функция с SQL запросом по проверке пользователя
         
+        errlabel = self.children[0].children[len(self.children[0].children) - 2]
+
         textInputValues = []
         for i in self.children[0].children:
             if type(i) == TextInput:
@@ -188,11 +205,14 @@ class AuthoriseScreen(Screen):
             res = cur.execute(query)
         
         if res == 0:
-            print('user doesnt exist')
+            errlabel.text = 'Неверно введен логин или пароль'
+            return
         else:
-            print('LOGIN OK')
+            print('LOGIN SUCCESS!!!')
 
         connection.close()
+
+        self.manager.current = 'chatscreen'
 
 class RegisterScreen(Screen):
     def __init__(self, **kwargs):
@@ -254,9 +274,15 @@ class RegisterScreen(Screen):
 
         connection.close()
 
+        self.manager.current = 'chatscreen'
+
+class ChatScreen(Screen):
+    pass
+
 mainScreenManager = ScreenManager()
 mainScreenManager.add_widget(AuthoriseScreen(name='auth'))
 mainScreenManager.add_widget(RegisterScreen(name='register'))
+mainScreenManager.add_widget(ChatScreen(name='chatscreen'))
 
 class ChatApp(App):
     def build(self):
