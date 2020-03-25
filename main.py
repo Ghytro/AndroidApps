@@ -1,13 +1,15 @@
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.config import Config
-from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.scrollview import ScrollView
+from kivy.core.window import Window
 import pymysql
 from pymysql.cursors import DictCursor
 import uuid
@@ -173,12 +175,10 @@ Builder.load_string("""
             on_press: root.RegisterUser()
 
 <ChatScreen>:
-    FloatLayout:
-        Label:
-            text: 'Sucessful Login'
-            color: 1, 1, 1, 1
-            font_name: 'font.ttf'
-            font_size: 28
+    ScrollView:
+        do_scroll_y: True
+        do_scroll_x: False
+       # size: Window.width, Window.height
 """)
 
 class AuthoriseScreen(Screen):
@@ -277,7 +277,15 @@ class RegisterScreen(Screen):
         self.manager.current = 'chatscreen'
 
 class ChatScreen(Screen):
-    pass
+    def __init__(self, **kwargs):
+        super(ChatScreen, self).__init__(**kwargs)
+        gr = GridLayout(cols=1, spacing=10, size_hint_y=None)
+        gr.bind(minimum_height=gr.setter('height'))
+        for i in range(100):
+            gr.add_widget(Button(text=str(i), size_hint_y=None, height=80))
+        self.children[0].add_widget(gr)
+        self.children[0].size_hint=(1, None)
+        self.children[0].size = (Window.width, Window.height)
 
 mainScreenManager = ScreenManager()
 mainScreenManager.add_widget(AuthoriseScreen(name='auth'))
