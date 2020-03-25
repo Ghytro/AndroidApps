@@ -9,7 +9,6 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.scrollview import ScrollView
-from kivy.core.window import Window
 import pymysql
 from pymysql.cursors import DictCursor
 import uuid
@@ -284,8 +283,7 @@ class ChatScreen(Screen):
         for i in range(100):
             gr.add_widget(Button(text=str(i), size_hint_y=None, height=80))
         self.children[0].add_widget(gr)
-        self.children[0].size_hint=(1, None)
-        self.children[0].size = (Window.width, Window.height)
+        self.children[0].size_hint=(1, 1)
 
 mainScreenManager = ScreenManager()
 mainScreenManager.add_widget(AuthoriseScreen(name='auth'))
