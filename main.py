@@ -11,9 +11,10 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.scrollview import ScrollView
 import pymysql
 from pymysql.cursors import DictCursor
-import uuid
+#import uuid
 import hashlib
-import xml.dom.minidom
+#import os
+import random
 
 def xml_parse(fileName):
     doc = xml.dom.minidom.parse(fileName)
@@ -54,6 +55,7 @@ Builder.load_string("""
             color: 1, 0, 0, 1
             font_size: 24
             font_name: 'font.ttf'
+            halign: 'center'
 
         TextInput:
             multiline: False
@@ -127,6 +129,7 @@ Builder.load_string("""
             color: 1, 0, 0, 1
             font_name: 'font.ttf'
             font_size: 22
+            halign: 'center'
 
         TextInput:
             id: 'reglogininp'
@@ -186,32 +189,48 @@ class AuthoriseScreen(Screen):
 
     def CheckUser(self):
         #здесь должна быть функция с SQL запросом по проверке пользователя
-        
-        errlabel = self.children[0].children[len(self.children[0].children) - 2]
-
-        textInputValues = []
-        for i in self.children[0].children:
-            if type(i) == TextInput:
-                textInputValues.append(i.text)
-        textInputValues = list(reversed(textInputValues))
-
-        hashedPass = str(hash_password(textInputValues[1]))
-
-        connection = pymysql.connect(host='localhost', user='root', password='123', db='python_chat', charset='utf8mb4')
-        with connection:
-            cur = connection.cursor()
-            query = "SELECT * FROM UserLoginData WHERE UserLoginData.login = '" + textInputValues[0] + "' and UserLoginData.pass = '" + hashedPass + "'"
-            res = cur.execute(query)
-        
-        if res == 0:
-            errlabel.text = 'Неверно введен логин или пароль'
+        try:
+            connection = pymysql.connect(host='localhost', user='root', password='123', db='python_chat', charset='utf8mb4')
+        except pymysql.err.Error:
+            conerrortext = ['Упс, что-то пошло не так.\nПроверьте подключение к интернету или зайдите позже.', 'Не удалось войти.\nПроверьте подключение к интернету.', 'Не получилось.\nПроверьте подключение к интернету.']
+            errlabel.text = conerrortext[random.randint(0, 2)]
+            errlabel.font_size = 16
             return
         else:
-            print('LOGIN SUCCESS!!!')
-
-        connection.close()
-
-        self.manager.current = 'chatscreen'
+            authdatar = None
+            with connection:
+                cur = connection.cursor()
+                query = ''
+                try:
+                    authdatar = open('authdata.pchat', 'r')
+                except FileNotFoundError:
+                    errlabel = self.children[0].children[len(self.children[0].children) - 2]
+                    textInputValues = []
+                    for i in self.children[0].children:
+                        if type(i) == TextInput:
+                            textInputValues.append(i.text)
+                    textInputValues = list(reversed(textInputValues))
+                    hashedPass = str(hash_password(textInputValues[1]))
+                    query = "SELECT * FROM UserLoginData WHERE UserLoginData.login = '" + textInputValues[0] + "' and UserLoginData.pass = '" + hashedPass + "'"
+                else:
+                    filelines = []
+                    for line in authdatar:
+                        if line[len(line) - 1] == '\n':
+                            line = line[0:-1]
+                        filelines.append(line)
+                    query = "SELECT * FROM UserLoginData WHERE UserLoginData.login = '" + filelines[0] + "' and UserLoginData.pass = '" + filelines[1] + "'"
+                    authdatar.close()
+                res = cur.execute(query)
+            connection.close()
+            if res == 0:
+                errlabel.text = 'Неверно введен логин или пароль'
+                return
+            if not authdatar:
+                authdata = open('authdata.pchat', 'w')
+                authdata.write(textInputValues[0] + '\n')
+                authdata.write(hashedPass)  
+                authdata.close()
+            self.manager.current = 'chatscreen'
 
 class RegisterScreen(Screen):
     def __init__(self, **kwargs):
@@ -238,7 +257,7 @@ class RegisterScreen(Screen):
 
         for i in textInputValues[0]:
             if not(i in prohibited_symbols):
-                errLabel.text = 'Логин может состоять только из букв\nлатинского алфавита и символов\n!$%^&?*()[]{}_-=`~+/\\\'|"<>.,'
+                errLabel.text = 'Логин может состоять только из букв\nлатинского алфавита, цифр и символов\n!$%^&?*()[]{}_-=`~+/\\\'|"<>.,'
                 errLabel.font_size = 16
                 return
 
@@ -251,27 +270,48 @@ class RegisterScreen(Screen):
             errLabel.text = 'Пароль должен быть как минимум 6 символов!'
             errLabel.font_size = 16
             return
-
-        connection = pymysql.connect(host='localhost', user='root', password='123', db='python_chat', charset='utf8mb4')
-        exists = 0
-        with connection:
-            cur = connection.cursor()
-            exists = cur.execute("SELECT * FROM UserLoginData WHERE UserLoginData.login='" + textInputValues[0] + "'")
-            
-        if exists:
-            errLabel.text = 'Пользователь с таким логином существует.'
-            connection.close()
+        connection = None
+        try:
+            connection = pymysql.connect(host='localhost', user='root', password='123', db='python_chat', charset='utf8mb4')
+        except pymysql.err.Error:
+            conerrortext = ['Упс, что-то пошло не так.\nПроверьте подключение к интернету или зайдите позже.', 'Не удалось создать пользователя.\nПроверьте подключение к интернету.', 'Не получилось.\nПроверьте подключение к интернету.']
+            errLabel.text = conerrortext[random.randint(0, 2)]
+            errLabel.font_size = 16
             return
+        else:
+            user_exists = False
 
-        #если проверки пройдены создаем пользователя
-        
-        with connection:
-            cur = connection.cursor()
-            hashed_password = str(hash_password(textInputValues[1]))
-            query = "INSERT INTO UserLoginData (login, pass) values('" + textInputValues[0] + "', '" + hashed_password + "')"
-            cur.execute(query)
+            with connection:
+                cur = connection.cursor()
+                logindata_table_exists = cur.execute("SELECT * FROM UserLoginData")
+                if not logindata_table_exists:
+                    print('The table UserLoginData doesnt exist')
+                    req = cur.execute("CREATE TABLE UserLoginData(id INT NOT NULL, login VARCHAR(128) NOT NULL, pass VARCHAR(256) NOT NULL, PRIMARY_KEY(id))")
+                    print(req)
 
-        connection.close()
+            with connection:
+                cur = connection.cursor()
+                exists = cur.execute("SELECT * FROM UserLoginData WHERE UserLoginData.login='" + textInputValues[0] + "'")
+                
+            if exists:
+                errLabel.text = 'Пользователь с таким логином существует.'
+                connection.close()
+                return
+
+            #если проверки пройдены создаем пользователя
+            
+            with connection:
+                cur = connection.cursor()
+                hashed_password = str(hash_password(textInputValues[1]))
+                query = "INSERT INTO UserLoginData (login, pass) values('" + textInputValues[0] + "', '" + hashed_password + "')"
+                cur.execute(query)
+            
+            authdata = open('authdata.pchat', 'w')
+            authdata.write(textInputValues[0] + '\n')
+            authdata.write(hashed_password)
+            authdata.close()
+
+            connection.close()
 
         self.manager.current = 'chatscreen'
 
@@ -292,9 +332,15 @@ mainScreenManager.add_widget(ChatScreen(name='chatscreen'))
 
 class ChatApp(App):
     def build(self):
+        authdatafile = None
+        try:
+            authdatafile = open('authdata.pchat', 'r')
+        except FileNotFoundError:
+            mainScreenManager.current = 'auth'
+        else:
+            mainScreenManager.children[0].CheckUser()
+            
         return mainScreenManager
-
-print (hash_password('Hello world!'))
 
 if __name__ == '__main__':
     ChatApp().run()
