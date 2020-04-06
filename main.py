@@ -189,6 +189,7 @@ class AuthoriseScreen(Screen):
 
     def CheckUser(self):
         #здесь должна быть функция с SQL запросом по проверке пользователя
+        errlabel = self.children[0].children[len(self.children[0].children) - 2]
         try:
             connection = pymysql.connect(host='localhost', user='root', password='123', db='python_chat', charset='utf8mb4')
         except pymysql.err.Error:
@@ -332,15 +333,14 @@ mainScreenManager.add_widget(ChatScreen(name='chatscreen'))
 
 class ChatApp(App):
     def build(self):
-        authdatafile = None
-        try:
-            authdatafile = open('authdata.pchat', 'r')
-        except FileNotFoundError:
-            mainScreenManager.current = 'auth'
-        else:
-            mainScreenManager.children[0].CheckUser()
-            
         return mainScreenManager
 
 if __name__ == '__main__':
+    authdatafile = None
+    try:
+        authdatafile = open('authdata.pchat', 'r')        
+    except FileNotFoundError:
+        mainScreenManager.current = 'auth'
+    else:
+        mainScreenManager.children[0].CheckUser()
     ChatApp().run()
