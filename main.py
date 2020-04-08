@@ -65,8 +65,12 @@ Builder.load_string("""
             pos_hint: {'y': .6, 'center_x': .5}
             font_size: '20px'
             font_name: 'font.ttf'
+            cursor_color: 29//255, 105//255, 246//255, 1
+            cursor_blink: True
 
         TextInput:
+            cursor_color: 29//255, 105//255, 246//255, 1
+            cursor_blink: True
             multiline: False
             size_hint: .75, None
             size: 0, 40
@@ -90,7 +94,7 @@ Builder.load_string("""
 
         Label:
             text: 'Нет аккаунта?'
-            pos_hint: {'y': -.22}
+            pos_hint: {'y': -.1999}
             font_size: 18
             color: .1, .1, .1, 1
             font_name: 'font.ttf'
@@ -98,7 +102,7 @@ Builder.load_string("""
         Button:
             text: 'Зарегистрироваться!'
             size_hint: None, None
-            size: 220, 40
+            size: 260, 50
             pos_hint: {'y': .2, 'center_x': .5}
             font_size: 22
             on_press: root.manager.current = 'register'
@@ -132,6 +136,7 @@ Builder.load_string("""
             halign: 'center'
 
         TextInput:
+            cursor_color: 29//255, 105//255, 246//255, 1
             id: 'reglogininp'
             multiline: False
             size_hint: .75, None
@@ -142,6 +147,7 @@ Builder.load_string("""
             font_name: 'font.ttf'
 
         TextInput:
+            cursor_color: 29//255, 105//255, 246//255, 1
             id: 'regpassinp'
             multiline: False
             size_hint: .75, None
@@ -154,6 +160,7 @@ Builder.load_string("""
             font_name: 'font.ttf'
 
         TextInput:
+            cursor_color: 29//255, 105//255, 246//255, 1
             id: 'regpassconfirm'
             multiline: False
             size_hint: .75, None
@@ -168,7 +175,7 @@ Builder.load_string("""
         Button:
             text: 'Зарегистрироваться!'
             size_hint: None, None
-            size: 220, 50
+            size: 235, 50
             pos_hint: {'y': .35, 'center_x': .5}     
             background_normal: ''
             background_color: 74/255, 118/255, 168/255, 1
@@ -181,6 +188,47 @@ Builder.load_string("""
         do_scroll_y: True
         do_scroll_x: False
        # size: Window.width, Window.height
+
+<ChatLine>:
+    canvas.before:
+        Color:
+            rgba: .95, .95, .97, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    size_hint: 1, None
+    size: 0, 150
+    anchor_x: 'left'
+    Image:
+        source: 'testavatar.jpg'
+        size: 100, 100
+        size_hint_y: None
+        size_hint_x: None
+        pos: 15, 0
+        pos_hint: {'center_y': .5}
+        allow_stretch: True
+    Label:
+        size_hint_y: None
+        size_hint_x: None
+        text_size: 700, 30
+        pos: 430, 70
+        text: 'Myname'
+        font_name: 'font.ttf'
+        font_size: 24
+        color: 0, 0, 0, 1
+        pos_hint: {'center_y': .75}
+
+    Label:
+        size_hint_y: None
+        size_hint_x: None
+        text_size: 700, 30
+        text: 'Lorem ipsum ooooo'
+        pos: 440, 20
+        font_name: 'font.ttf'
+        font_size: 18
+        color: .4, .4, .4, 1
+        pos_hint: {'center_y': .45}
 """)
 
 class AuthoriseScreen(Screen):
@@ -254,10 +302,10 @@ class RegisterScreen(Screen):
             errLabel.font_size = 18
             return
 
-        prohibited_symbols = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!$%^&?*()[]{}_-=`~+/\\\'|"<>.,'
+        allowed_symbols = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!$%^&?*()[]{}_-=`~+/\\\'|"<>.,'
 
         for i in textInputValues[0]:
-            if not(i in prohibited_symbols):
+            if not(i in allowed_symbols):
                 errLabel.text = 'Логин может состоять только из букв\nлатинского алфавита, цифр и символов\n!$%^&?*()[]{}_-=`~+/\\\'|"<>.,'
                 errLabel.font_size = 16
                 return
@@ -284,10 +332,11 @@ class RegisterScreen(Screen):
 
             with connection:
                 cur = connection.cursor()
-                logindata_table_exists = cur.execute("SELECT * FROM UserLoginData")
-                if not logindata_table_exists:
+                try:
+                    res = cur.execute("SELECT * FROM UserLoginData")
+                except pymysql.err.ProgrammingError:
                     print('The table UserLoginData doesnt exist')
-                    req = cur.execute("CREATE TABLE UserLoginData(id INT NOT NULL, login VARCHAR(128) NOT NULL, pass VARCHAR(256) NOT NULL, PRIMARY_KEY(id))")
+                    req = cur.execute("CREATE TABLE `UserLoginData`(`id` INT NOT NULL AUTO_INCREMENT, `login` VARCHAR (80) NOT NULL, `pass` VARCHAR (256) NOT NULL, PRIMARY KEY (`id`))")
                     print(req)
 
             with connection:
@@ -316,13 +365,31 @@ class RegisterScreen(Screen):
 
         self.manager.current = 'chatscreen'
 
+class ChatLine(FloatLayout):
+    def __init__(self, **kwargs):
+        super(ChatLine, self).__init__(**kwargs)
+
+    def setUserData(self, **kwargs):
+        keys = ['lastmessage', 'username', 'avatar']
+        for key, value in kwargs.items():
+            if key == 'lastmessage':
+                if len(value) > 23:
+                    value = value[0:22] + '...'
+                self.children[0].text = value
+            if key == 'username':
+                self.children[1].text = value
+            if key == 'avatar':
+                self.children[2].source = value
+
 class ChatScreen(Screen):
     def __init__(self, **kwargs):
         super(ChatScreen, self).__init__(**kwargs)
         gr = GridLayout(cols=1, spacing=10, size_hint_y=None)
         gr.bind(minimum_height=gr.setter('height'))
-        for i in range(100):
-            gr.add_widget(Button(text=str(i), size_hint_y=None, height=80))
+        for i in range(2):
+            ch = ChatLine()
+            ch.setUserData(username='Nickname ' + str(i), lastmessage='LastMessageфыфффффффффффффффффффффффффффффффффффффффффф ' + str(i), avatar='testavatar.jpg')
+            gr.add_widget(ch)
         self.children[0].add_widget(gr)
         self.children[0].size_hint=(1, 1)
 
