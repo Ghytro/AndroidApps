@@ -1,0 +1,117 @@
+#:import NavigationLayout kivymd.navigationdrawer.NavigationLayout
+#:import MDRaisedButton kivymd.button.MDRaisedButton
+#:import MDTextField kivymd.textfields.MDTextField
+#:import MDLabel kivymd.label.MDLabel
+<PieChatRootWidget>:
+    ScreenManager:
+        id: main_screen_manager
+
+        AuthScreen:
+            name: 'auth_screen'
+
+        RegisterScreen:
+            name: 'register_screen'
+
+<AuthScreenInput@MDTextField>:
+    multiline: False
+    size_hint: .7, None
+    pos_hint: {'center_x': .5}
+    font_size: 20
+    line_color_normal: .5, .5, .5, 1
+    color_mode: 'accent'
+
+<PasswordInput@MDTextField>:
+    multiline: False
+    size_hint: .7, None
+    pos_hint: {'center_x': .5}
+    font_size: 20
+    line_color_normal: .5, .5, .5, 1
+    color_mode: 'accent'
+    password: True
+    password_mask: '*'
+
+<AuthScreenButton@MDRaisedButton>:
+    pos_hint: {'center_x': .5}
+
+<AuthBoxLayout@BoxLayout>:
+    size: root.size
+    orientation: 'vertical'
+    spacing: min(root.width, root.height) * .02
+    padding: 0, self.height * .1, 0, self.height * .2
+
+<RegBoxLayout@BoxLayout>:
+    size: root.size
+    orientation: 'vertical'
+    spacing: min(root.width, root.height) * .02
+    padding: 0, self.height * .02, 0, self.height * .2
+
+<AuthScreen@Screen>:
+
+    AuthBoxLayout:
+        MDLabel:
+            text: 'Welcome to PieChat!\nBut first introduce yourself'
+            font_size: 24
+            halign: 'center'
+            theme_text_color: 'Primary'
+        MDLabel:
+            id: errlabel_auth
+            text: ''
+            halign: 'center'
+            theme_text_color: 'Error'
+
+        AuthScreenInput:
+            id: login_input
+            hint_text: 'Login:'
+
+        PasswordInput:
+            id: pass_input
+            hint_text: 'Password'
+
+        AuthScreenButton:
+            id: log_in
+            text: 'Log in'
+            on_press: app.root.checkUser(root.ids.login_input.text, root.ids.pass_input.text, root.ids.errlabel_auth)
+
+        MDLabel:
+            text: ''
+
+        Label:
+            text: 'Still no account?'
+            font_size: 18
+
+        AuthScreenButton:
+            id: create_account
+            text: 'Create account'
+            on_press: app.root.changeScreen('register_screen')
+
+<RegisterScreen@Screen>:
+    RegBoxLayout:
+        MDLabel:
+            text: "That's where it all begins..."
+            font_size: 24
+            halign: 'center'
+            theme_text_color: 'Primary'
+
+        MDLabel:
+            id: errlabel_reg
+            text: ''
+            halign: 'center'
+            theme_text_color: 'Error'
+
+        AuthScreenInput:
+            id: reg_login
+            hint_text: 'Login'
+            max_text_length: 20
+
+        PasswordInput:
+            id: reg_pass
+            hint_text: 'Password'
+
+        PasswordInput:
+            id: reg_confirm_pass
+            hint_text: 'Confirm password'
+
+        AuthScreenButton:
+            id: create_account
+            text: 'Create account!'
+            on_press: app.root.createUser(root.ids.reg_login.text, root.ids.reg_pass.text, root.ids.reg_confirm_pass.text, root.ids.errlabel_reg)
