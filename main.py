@@ -2,6 +2,7 @@ from kivy.app import App
 from kivymd.theming import ThemeManager
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.core.window import Window
 import pymysql
 from pymysql.cursors import DictCursor
 import random
@@ -31,6 +32,13 @@ class PieChatRootWidget(BoxLayout):
     def changeScreen(self, screen_name):
         self.ids.main_screen_manager.current = screen_name
         self.openedScreens.append(screen_name)
+
+    def gotoPrevScreen(self):
+        if len(self.openedScreens) > 1:
+            self.openedScreens.pop()
+            self.ids.main_screen_manager.current = self.openedScreens[len(self.openedScreens) - 1]
+            return True
+        return False
 
     def createUser(self, login, password, confirm_password, errLabel):
         textInputValues = [login, password, confirm_password]
@@ -157,6 +165,11 @@ class PieChatApp(App):
 
     def __init__(self, **kwargs):
         super(PieChatApp, self).__init__(**kwargs)
+        Window.bind(on_keyboard=self.onBackBtn)
+
+    def onBackBtn(self, window, key, *args):
+        if key == 27:
+            return self.root.gotoPrevScreen()
 
     def build(self):
         return PieChatRootWidget()
