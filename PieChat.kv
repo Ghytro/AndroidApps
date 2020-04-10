@@ -1,7 +1,4 @@
-#:import NavigationLayout kivymd.navigationdrawer.NavigationLayout
-#:import MDRaisedButton kivymd.button.MDRaisedButton
-#:import MDTextField kivymd.textfields.MDTextField
-#:import MDLabel kivymd.label.MDLabel
+
 <PieChatRootWidget>:
     ScreenManager:
         id: main_screen_manager
@@ -11,6 +8,9 @@
 
         RegisterScreen:
             name: 'register_screen'
+
+        ChatListScreen:
+            name: 'chat_list_screen'
 
 <AuthScreenInput@MDTextField>:
     multiline: False
@@ -46,7 +46,6 @@
     padding: 0, self.height * .02, 0, self.height * .2
 
 <AuthScreen@Screen>:
-
     AuthBoxLayout:
         MDLabel:
             text: 'Welcome to PieChat!\nBut first introduce yourself'
@@ -115,3 +114,13 @@
             id: create_account
             text: 'Create account!'
             on_press: app.root.createUser(root.ids.reg_login.text, root.ids.reg_pass.text, root.ids.reg_confirm_pass.text, root.ids.errlabel_reg)
+
+<ChatListScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        MDToolbar:
+            title: 'PieChat'
+        ScrollView:
+            id: chat_scrollview
+            MDList:
+                id: chat_list
