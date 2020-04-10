@@ -1,8 +1,10 @@
-from kivy.app import App
-from kivymd.theming import ThemeManager
+from kivymd.app import MDApp
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
+from kivymd.uix.list import TwoLineIconListItem
+from kivymd.uix.list import IconLeftWidget
 import pymysql
 from pymysql.cursors import DictCursor
 import random
@@ -12,6 +14,24 @@ def hash_password(_password):
     hash_object = hashlib.sha256(_password.encode('utf-8'))
     hex_dig = hash_object.hexdigest()
     return hex_dig
+
+class Chatline(object):
+    def __init__(self, username, last_message, cached_avatar):
+        self.username = username
+        self.last_message = last_message
+        self.cached_avatar = cached_avatar
+
+class ChatListScreen(Screen):
+    # def __init__(self, **kwargs):
+    #     super(ChatListScreen, self).__init__(**kwargs)
+    #     for i in range(10):
+    #         self.addLine(Chatline("username" + str(i + 1), "my last message" + str(i + 1), "testavatar.png"))
+
+    def addLine(self, chatline):
+        line = TwoLineIconListItem(text=chatline.username, secondary_text=chatline.last_message)
+        line.add_widget(IconLeftWidget(source=chatline.cached_avatar))
+        self.children[0].ids.chat_scrollview.ids.chat_list.add_widget(line)
+
 
 class PieChatRootWidget(BoxLayout):
     openedScreens = []
@@ -26,7 +46,7 @@ class PieChatRootWidget(BoxLayout):
             lines = []
             for line in authdatafile:
                 lines.append(line)
-            self.checkUser(lines[0], lines[1], None)
+            self.authUser(lines[0], lines[1], None)
         
 
     def changeScreen(self, screen_name):
@@ -95,7 +115,7 @@ class PieChatRootWidget(BoxLayout):
                 exists = cur.execute("SELECT * FROM UserLoginData WHERE UserLoginData.login='" + textInputValues[0] + "'")
                 
             if exists:
-                errLabel.text = 'A user with that login already exists. Think of another one'
+                errLabel.text = 'A user with that login already exists.\nThink of another one'
                 errLabel.font_size = 18
                 connection.close()
                 return
@@ -107,6 +127,10 @@ class PieChatRootWidget(BoxLayout):
                 hashed_password = str(hash_password(textInputValues[1]))
                 query = "INSERT INTO UserLoginData (login, pass) values('" + textInputValues[0] + "', '" + hashed_password + "')"
                 cur.execute(query)
+                cur.execute("SELECT MAX(`id`) FROM `UserLoginData`")
+                rows = cur.fetchall()
+                user_id = rows[0][0]
+                cur.execute("CREATE TABLE `MainScreen" + str(user_id) + "`(`chat_id` INT NOT NULL, PRIMARY KEY (`chat_id`))")
             
             authdata = open('authdata.pchat', 'w')
             authdata.write(textInputValues[0] + '\n')
@@ -115,7 +139,7 @@ class PieChatRootWidget(BoxLayout):
 
             connection.close()
 
-    def checkUser(self, login, password, errlabel):
+    def authUser(self, login, password, errlabel):
         try:
             connection = pymysql.connect(host='localhost', user='root', password='123', db='python_chat', charset='utf8mb4')
         except pymysql.err.Error:
@@ -154,17 +178,15 @@ class PieChatRootWidget(BoxLayout):
                 authdata.write(hashedPass)  
                 authdata.close()
             print('Logged-in')
+            self.openedScreens.clear()
+            self.changeScreen('chat_list_screen')
 
 
-class PieChatApp(App):
-    theme_cls = ThemeManager()
-    theme_cls.primary_palette = 'BlueGrey'
-    theme_cls.accent_palette = 'BlueGrey'
-    theme_cls.theme_style = 'Dark'
-    title = 'PieChat'
+class PieChat(MDApp):
+    
 
     def __init__(self, **kwargs):
-        super(PieChatApp, self).__init__(**kwargs)
+        super(PieChat, self).__init__(**kwargs)
         Window.bind(on_keyboard=self.onBackBtn)
 
     def onBackBtn(self, window, key, *args):
@@ -172,7 +194,11 @@ class PieChatApp(App):
             return self.root.gotoPrevScreen()
 
     def build(self):
+        self.theme_cls.primary_palette = 'BlueGray'
+        self.theme_cls.accent_palette = 'BlueGray'
+        self.theme_cls.theme_style = 'Dark'
+        self.title = 'PieChat'
         return PieChatRootWidget()
 
 if __name__ == '__main__':
-    PieChatApp().run()
+    PieChat().run()
