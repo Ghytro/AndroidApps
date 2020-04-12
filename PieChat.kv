@@ -12,6 +12,9 @@
         ChatListScreen:
             name: 'chat_list_screen'
 
+        ChatCreationScreen:
+            name: 'chat_creation_screen'
+
 <AuthScreenInput@MDTextField>:
     multiline: False
     size_hint: .7, None
@@ -69,7 +72,7 @@
         AuthScreenButton:
             id: log_in
             text: 'Log in'
-            on_press: app.root.checkUser(root.ids.login_input.text, root.ids.pass_input.text, root.ids.errlabel_auth)
+            on_release: app.root.authUser(root.ids.login_input.text, root.ids.pass_input.text, root.ids.errlabel_auth)
 
         MDLabel:
             text: ''
@@ -81,7 +84,7 @@
         AuthScreenButton:
             id: create_account
             text: 'Create account'
-            on_press: app.root.changeScreen('register_screen')
+            on_release: app.root.changeScreen('register_screen')
 
 <RegisterScreen@Screen>:
     RegBoxLayout:
@@ -113,9 +116,14 @@
         AuthScreenButton:
             id: create_account
             text: 'Create account!'
-            on_press: app.root.createUser(root.ids.reg_login.text, root.ids.reg_pass.text, root.ids.reg_confirm_pass.text, root.ids.errlabel_reg)
+            on_release: app.root.createUser(root.ids.reg_login.text, root.ids.reg_pass.text, root.ids.reg_confirm_pass.text, root.ids.errlabel_reg)
 
 <ChatListScreen>:
+    MDFloatingActionButton:
+        icon: "plus"
+        on_release: print("da")
+        x: root.width - self.width - dp(30)
+        y: dp(45)
     BoxLayout:
         orientation: 'vertical'
         MDToolbar:
@@ -124,3 +132,6 @@
             id: chat_scrollview
             MDList:
                 id: chat_list
+<ChatCreationScreen>:
+    MDLabel:
+        text: "You're finnaly here!"
