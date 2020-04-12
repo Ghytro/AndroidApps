@@ -15,6 +15,12 @@ def hash_password(_password):
     hex_dig = hash_object.hexdigest()
     return hex_dig
 
+def getLoggedInUserLogin():
+    f = open("authdata.pchat", "r")
+    login = f.readline()[0:-1]
+    f.close()
+    return login
+
 class Chatline(object):
     def __init__(self, username, last_message, cached_avatar):
         self.username = username
@@ -22,16 +28,13 @@ class Chatline(object):
         self.cached_avatar = cached_avatar
 
 class ChatListScreen(Screen):
-    # def __init__(self, **kwargs):
-    #     super(ChatListScreen, self).__init__(**kwargs)
-    #     for i in range(10):
-    #         self.addLine(Chatline("username" + str(i + 1), "my last message" + str(i + 1), "testavatar.png"))
-
     def addLine(self, chatline):
         line = TwoLineIconListItem(text=chatline.username, secondary_text=chatline.last_message)
-        line.add_widget(IconLeftWidget(source=chatline.cached_avatar))
-        self.children[0].ids.chat_scrollview.ids.chat_list.add_widget(line)
+        line.add_widget(IconLeftWidget(icon=chatline.cached_avatar))
+        self.children[0].children[0].children[0].add_widget(line)
 
+class ChatCreationScreen(Screen):
+    pass
 
 class PieChatRootWidget(BoxLayout):
     openedScreens = []
@@ -48,6 +51,9 @@ class PieChatRootWidget(BoxLayout):
                 lines.append(line)
             self.authUser(lines[0], lines[1], None)
         
+
+    def openChatCreationScreen(self):
+        print("opened")
 
     def changeScreen(self, screen_name):
         self.ids.main_screen_manager.current = screen_name
@@ -167,10 +173,10 @@ class PieChatRootWidget(BoxLayout):
                     query = "SELECT * FROM UserLoginData WHERE UserLoginData.login = '" + filelines[0] + "' and UserLoginData.pass = '" + filelines[1] + "'"
                     authdatar.close()
                 res = cur.execute(query)
-            connection.close()
             if not res:
                 errlabel.text = 'Incorrect login or password'
                 errlabel.font_size = 16
+                connection.close()
                 return
             if not authdatar:
                 authdata = open('authdata.pchat', 'w')
@@ -180,11 +186,33 @@ class PieChatRootWidget(BoxLayout):
             print('Logged-in')
             self.openedScreens.clear()
             self.changeScreen('chat_list_screen')
-
+            with connection:
+                authdatar = open('authdata.pchat', 'r')
+                login = authdatar.readline()
+                login = login[0:-1]
+                cur = connection.cursor()
+                cur.execute("SELECT * FROM UserLoginData WHERE UserLoginData.login = '" + login + "'")
+                loggedInUserID = cur.fetchone()[0]
+                cur.execute("SELECT * FROM MainScreen" + str(loggedInUserID))
+                chatList = cur.fetchall()
+                for chatID in chatList:
+                    chatID = chatID[0]
+                    cur.execute("SELECT name FROM ChatInfo WHERE id = " + str(chatID))
+                    chatName = str(cur.fetchone()[0])
+                    cur.execute("SELECT MAX(`id`) FROM `Chat" + str(chatID) + "messages`")
+                    lastMessageID = int(cur.fetchone()[0])
+                    cur.execute("SELECT message_text, sender_id FROM `Chat" + str(chatID) + "messages` WHERE id = " + str(lastMessageID))
+                    row = cur.fetchone()
+                    lastMessageText = str(row[0])
+                    senderID = int(row[1])
+                    cur.execute("SELECT login from `UserLoginData` WHERE id = " + str(senderID))
+                    senderLogin = cur.fetchone()[0]
+                    if senderLogin == getLoggedInUserLogin():
+                        senderLogin = "You"
+                    lastMessageText = senderLogin + ": " + lastMessageText
+                    self.children[0].children[0].addLine(Chatline(chatName, lastMessageText, "testavatar.png"))
 
 class PieChat(MDApp):
-    
-
     def __init__(self, **kwargs):
         super(PieChat, self).__init__(**kwargs)
         Window.bind(on_keyboard=self.onBackBtn)
