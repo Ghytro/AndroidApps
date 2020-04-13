@@ -119,12 +119,8 @@
             on_release: app.root.createUser(root.ids.reg_login.text, root.ids.reg_pass.text, root.ids.reg_confirm_pass.text, root.ids.errlabel_reg)
 
 <ChatListScreen>:
-    MDFloatingActionButton:
-        icon: "plus"
-        on_release: print("da")
-        x: root.width - self.width - dp(30)
-        y: dp(45)
     BoxLayout:
+        size: root.size
         orientation: 'vertical'
         MDToolbar:
             title: 'PieChat'
@@ -132,6 +128,11 @@
             id: chat_scrollview
             MDList:
                 id: chat_list
+    MDFloatingActionButton:
+        icon: "plus"
+        on_release: app.root.changeScreen('chat_creation_screen')
+        x: root.width - self.width - dp(30)
+        y: dp(45)
 <ChatCreationScreen>:
     MDLabel:
         text: "You're finnaly here!"
