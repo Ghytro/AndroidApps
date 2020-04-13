@@ -31,7 +31,7 @@ class ChatListScreen(Screen):
     def addLine(self, chatline):
         line = TwoLineIconListItem(text=chatline.username, secondary_text=chatline.last_message)
         line.add_widget(IconLeftWidget(icon=chatline.cached_avatar))
-        self.children[0].children[0].children[0].add_widget(line)
+        self.children[1].children[0].children[0].add_widget(line)
 
 class ChatCreationScreen(Screen):
     pass
