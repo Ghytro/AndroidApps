@@ -49,7 +49,9 @@ class PieChatRootWidget(BoxLayout):
             lines = []
             for line in authdatafile:
                 lines.append(line)
-            self.authUser(lines[0], lines[1], None)
+            childr_len = len(self.children[0].children)
+            errlabel = self.children[0].children[childr_len - 1].ids.errlabel_auth
+            self.authUser(lines[0], lines[1], errlabel)
         
 
     def openChatCreationScreen(self):
