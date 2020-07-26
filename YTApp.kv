@@ -1,0 +1,61 @@
+#:import threading threading
+<RootWidget>:
+    ScreenManager:
+        id: main_screen_manager
+
+        SubScreen:
+            id: subscreen
+            name: 'subscreen'
+        
+        LoadingScreen:
+            id: loadingscreen
+            name: 'loadingscreen'
+        
+        DownloadScreen:
+            id: downloadscreen
+            name: 'downloadscreen'
+
+<SubScreen@Screen>:
+    BoxLayout:
+        orientation: 'vertical'
+        MDToolbar:
+            title: "YTDownloader"
+        MDTextField:
+            id: ytlink
+            multiline: False
+            size_hint: .5, None
+            pos_hint: {'center_x': .5}
+            font_size: 20
+            line_color_normal: .5, .5, .5, 1
+            color_mode: 'accent'
+            hint_text: 'Link'
+            helper_text: 'Enter the link of a YouTube video you want do download'
+            helper_text_mode: 'on_focus'
+        MDRoundFlatIconButton:
+            text: "Select folder"
+            icon: "folder"
+            pos_hint: {"center_x": .5}
+            on_release: threading.Thread(target=app.root.open_file_manager, args=(root.ids.dirname,)).start()
+        MDLabel:
+            id: dirname
+            text: "Choose a directory to save the video"
+            font_size: 12
+            theme_text_color: 'Secondary'
+            halign: "center"
+        MDRoundFlatButton:
+            text: "Download!"
+            pos_hint: {'center_x': .5}
+            on_release: threading.Thread(target=app.root.download_video, args=(root.ids.ytlink.text, root.ids.dirname.text,)).start()
+
+<LoadingScreen@Screen>:
+    MDSpinner:
+        size_hint: None, None
+        size: dp(46), dp(46)
+        pos_hint: {'center_x': .5, 'center_y': .5}
+        active: True
+
+<DownloadScreen@Screen>:
+    MDLabel:
+        id: video_title
+        text: ''
+        theme_text_color: "Primary"
