@@ -1,9 +1,12 @@
+from kivy.config import Config
+from kivy.core.window import Window
 from kivymd.app import MDApp
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
 import easygui
 import pytube
 import threading
+import requests
 
 class RootWidget(BoxLayout):
     def __init__(self, **kwargs):
@@ -16,18 +19,29 @@ class RootWidget(BoxLayout):
         path = easygui.diropenbox()
         print(path)
         if path != None:
-            labtext.text = path
+            labtext.text = "Your video will be saved in " + path
 
-    def download_video(self, link, dirname):
+    def download_video(self, link, dirname, errlabel):
         if link == '':
-            print("link cannot be empty")
+            errlabel.text = "Link cannot be empty!"
             return
         if '\\' not in dirname:
-            print("choose a directory")
+            errlabel.text = "Choose a directory to save the video"
             return
         self.change_screen("loadingscreen")
-        video_title = pytube.YouTube(link).title
-        self.ids.main_screen_manager.get_screen("downloadscreen").ids.video_title.text = video_title
+
+        dowloadscreen = self.ids.main_screen_manager.get_screen("downloadscreen")
+        
+        yt = pytube.YouTube(link)
+
+        video_title = yt.title
+        dowloadscreen.ids.preview.ids.video_title.text = video_title
+
+        #getting thumbnail
+        video_id = yt.video_id
+        dowloadscreen.ids.preview.ids.preview_img.source = f"https://img.youtube.com/vi/{video_id}/0.jpg"
+        dowloadscreen.ids.preview.ids.preview_img.reload()
+
         self.ids.main_screen_manager.current = "downloadscreen"
 
 class YTApp(MDApp):
