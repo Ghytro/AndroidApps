@@ -15,7 +15,7 @@
             id: downloadscreen
             name: 'downloadscreen'
 
-<SubScreen@Screen>:
+<SubScreen>:
     BoxLayout:
         orientation: 'vertical'
         #size_hint: 1, .9
@@ -56,7 +56,7 @@
             theme_text_color: 'Primary'
             halign: 'center'
 
-<LoadingScreen@Screen>:
+<LoadingScreen>:
     MDSpinner:
         size_hint: None, None
         size: dp(46), dp(46)
@@ -69,28 +69,33 @@
         halign: 'center'
         pos_hint: {'center_y': .6}
 
-<VideoPreview@BoxLayout>:
-    orientation: 'vertical'
-    size: (300, 200)
-    pos_hint: {"center_x": .5}
-    AsyncImage:
-        id: preview_img
-        source: ""
-        pos_hint: {"center_x": .5}
-        size: self.texture_size
-    MDLabel:
-        id: video_title
-        text: ''
-        theme_text_color: "Primary"
-        font_size: 14
-        valign: 'bottom'
-        spacing: 0
-
-<DownloadScreen@Screen>:
+<DownloadScreen>:
     BoxLayout:
         orientation: 'vertical'
-        VideoPreview:
+        padding: 100
+        MDCard:
+            size: "480dp", "360dp"
+            size_hint: None, None
             id: preview
+            pos_hint: {"center_x": .5}
+            RelativeLayout:
+                AsyncImage:
+                    id: preview_img
+                    source: "thumbnail.jpg"
+                    size: root.children[0].children[0].children[0].size
+                    allow_stretch: True
+                MDLabel:
+                    id: video_title
+                    text: "Title"
+                    markup: True
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                    x: "10dp"
+                    y: "10dp"
+                    theme_text_color: "Custom"
+                    text_color: 1, 1, 1, 1
+        
         MDRoundFlatIconButton:
-            icon: 'folder'
-            text: 'bruh'
+            icon: "library-video"
+            text: "Resolution"
+            pos_hint: {"center_x": .5}
