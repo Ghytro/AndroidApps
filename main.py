@@ -3,6 +3,7 @@ from kivy.core.window import Window
 from kivymd.app import MDApp
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivymd.uix.menu import MDDropdownMenu
 import easygui
 import pytube
 import threading
@@ -31,16 +32,26 @@ class RootWidget(BoxLayout):
         self.change_screen("loadingscreen")
 
         dowloadscreen = self.ids.main_screen_manager.get_screen("downloadscreen")
+        print("here")
+        print(link)
         
         yt = pytube.YouTube(link)
+        print("here")
 
         video_title = yt.title
-        dowloadscreen.ids.preview.ids.video_title.text = video_title
+        dowloadscreen.children[0].children[1].children[0].children[0].text = video_title
 
-        #getting thumbnail
         video_id = yt.video_id
-        dowloadscreen.ids.preview.ids.preview_img.source = f"https://img.youtube.com/vi/{video_id}/0.jpg"
-        dowloadscreen.ids.preview.ids.preview_img.reload()
+        print("here")
+        # thmb = requests.get(f"https://img.youtube.com/vi/{video_id}/0.jpg")
+        # print("here")
+        # with open("thumbnail.jpg", "wb") as thfile:
+        #     thfile.write(thmb.content)
+        print("here")
+        #thfile.close()
+        dowloadscreen.children[0].children[1].children[0].children[1].source = f"https://img.youtube.com/vi/{video_id}/0.jpg"
+        dowloadscreen.children[0].children[1].children[0].children[1].reload()
+        print("here")
 
         self.ids.main_screen_manager.current = "downloadscreen"
 
